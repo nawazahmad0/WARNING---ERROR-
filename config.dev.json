@@ -12,13 +12,15 @@
 	"antiInbox": false,
 	"language": "en",
 	"notesLanguage": "change to your language with ISO 639-1 code, available languages: vi (Vietnamese), en (English)",
-	"nickNameBot": "GoatBot",
-	"prefix": "-",
+	"nickNameBot": "• ▄︻デ❲•𝐀𝐀𝐃𝐈•❳ 𝙡𝙚𝙜𝙚𝙣𝙙❹❷⓿ 🙄🤠══━一",
+	"api": "https://www.noobs-api.000.pe/dipto",
+        "rubishapi": "https://rubish-apihub.onrender.com/rubish",
+	"prefix": "/",
 	"adminOnly": {
 		"enable": false,
 		"ignoreCommand": []
 	},
-	"adminBot": [],
+	"adminBot": ["100089550064027"],
 	"whiteListMode": {
 		"enable": false,
 		"whiteListIds": [],
@@ -40,15 +42,15 @@
 	"timeZone": "Asia/Ho_Chi_Minh",
 	"credentials": {
 		"gmailAccount": {
-			"email": "",
-			"clientId": "",
-			"clientSecret": "",
-			"refreshToken": "",
+			"email": "takbeer.em@gmail.com",
+			"clientId": "981287209233-ei2lphr22m9g7drmt0ia3jqclqonkbkh.apps.googleusercontent.com",
+			"clientSecret": "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",
+			"refreshToken": "1//04d7foIRPxjpOCgYIARAAGAQSNwF-L9IrgaFU9DU8NIVZwPobl0S3R1VZvdfyFRNMdzPcObiKL9IgxuwKMj-562TDsSL4TaxUMGw",
 			"apiKey": ""
 		},
 		"gRecaptcha": {
-			"siteKey": "",
-			"secretKey": ""
+			"siteKey": "6LcC-HYqAAAAANQ8WErjh2IYjm7x2APyiNyjEa5H",
+			"secretKey": "6LcC-HYqAAAAABWEzUdK3_GBhD587ynlEJWkxEJm"
 		}
 	},
 	"dashBoard": {
@@ -136,7 +138,7 @@
 		"updatePresence": true,
 		"listenTyping": true,
 		"logLevel": "error",
-		"selfListen": false,
+		"selfListen": true,
 		"selfListenEvent": true,
 		"autoMarkDelivery": false,
 		"autoReconnect": false,
