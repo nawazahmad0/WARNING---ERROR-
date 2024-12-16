@@ -1,88 +1,115 @@
-function convert(time){
-	var date = new Date(`${time}`);
-	var year = date.getFullYear();
-	var month = date.getMonth() + 1;
-	var day = date.getDate();
-	var hours = date.getHours();
-	var minutes = date.getMinutes();
-	var seconds = date.getSeconds();
-	var formattedDate = `${ day < 10 ? "0" + day : day}` + "/" +`${ month < 10 ? "0" + month : month}` + "/" + year + "||" + `${ hours < 10 ? "0" + hours : hours}` + ":" + `${ minutes < 10 ? "0" + minutes : minutes}` + ":" + `${ seconds < 10 ? "0" + seconds : seconds}`;
-	return formattedDate;
-}
+const axios = require('axios');
 
 module.exports = {
-	config: {
-		name: "stalk",
-		author: "cliff",
-		version: "1.5",
-		countDown: 5,
-		role: 0,
-		guide: "[reply/uid/@mention]",
-		category: "info",
-		shortDescription: {
-			en: "Get info using uid/mention/reply to a message"
-		}
-	},
+    config: {
+name: "stalk",
+aliases: [],
+version: "1.0", 
+author: "RUBISH",
+description: {
+    vi: "Thu thập thông tin từ một người dùng trên Facebook.",
+    en: "Retrieve information about a user on Facebook."
+},
+category: "Tools",
+guide: {
+    vi: "{pn} <@mention hoặc trả lời tin nhắn của người dùng>",
+    en: "{pn} <@mention or reply to a message of the user>"
+}
+    },
 
-	onStart: async function({ api, event, args }) {
-		const request = require("request");
-		const axios = require("axios");
-		const fs = require("fs");
-		let path = __dirname + `/cache/info.png`;
+  onStart: async function ({ api, args, event }) {
+      let userId;
+      let userName;
 
-		if (args.join().indexOf('@') !== -1) {
-			var id = Object.keys(event.mentions);
-		} else {
-			var id = args[0] || event.senderID;
-		}
+      try {
+  if (event.type === "message_reply") {
+userId = event.messageReply.senderID;
+const user = await api.getUserInfo(userId);
+userName = user[userId].name;
+  } else {
+const input = args.join(" ");
 
-		if (event.type == "message_reply") {
-			var id = event.messageReply.senderID;
-		}
+if (event.mentions && Object.keys(event.mentions).length > 0) {
+    userId = Object.keys(event.mentions)[0];
+    const user = await api.getUserInfo(userId);
+    userName = user[userId].name;
+} else if (/^\d+$/.test(input)) {
+    userId = input;
+    const user = await api.getUserInfo(userId);
+    userName = user[userId].name;
+} else if (input.includes("facebook.com")) {
+    const { findUid } = global.utils;
+    let linkUid;
+    try {
+linkUid = await findUid(input);
+    } catch (error) {
+console.error(error);
+return api.sendMessage(
+    "⚠️ |  I couldn't find the user ID from the provided link. Please try again with the user ID.\n\nExample ➾ .stalk 100073291639820",
+    event.threadID
+);
+    }
+    if (linkUid) {
+userId = linkUid;
+const user = await api.getUserInfo(userId);
+userName = user[userId].name;
+    }
+} else {
+    userId = event.senderID;
+    const user = await api.getUserInfo(userId);
+    userName = user[userId].name;
+}
+  }
 
-		try {
-			const resp = await axios.get(`http://eu4.diresnode.com:3588/stalk?uid=${id}`);
-			var name = resp.data.name;
-			var link_profile = resp.data.link;
-			var uid = resp.data.id;
-			var first_name = resp.data.first_name;
-			var username = resp.data.username || "No data!";
-			var created_time = convert(resp.data.created_time);
-			var web = resp.data.website || "No data!";
-			var gender = resp.data.gender;
-			var relationship_status = resp.data.relationship_status || "No data!";
-			var love = resp.data.significant_other || "No data!";
-			var bday = resp.data.birthday || "No data!";
-			var follower = resp.data.subscribers.summary.total_count || "No data!";
-			var is_verified = resp.data.is_verified;
-			var quotes = resp.data.quotes || "No data!";
-			var about = resp.data.about || "No data!";
-			var locale = resp.data.locale || "No data!";
-			var hometown = !!resp.data.hometown ? resp.data.hometown.name : "No Hometown";
-			var cover = resp.data.source || "No Cover photo";
-			var avatar = `https://graph.facebook.com/${id}/picture?width=1500&height=1500&access_token=1174099472704185|0722a7d5b5a4ac06b11450f7114eb2e9`;
+  const response = await axios.get(`www.noobs-api.000.pe/dipto/fbinfo?id=${userId}&key=dipto008`);
+const apiResponse = response.data;
 
-			//callback
-let cb = function() {
-api.sendMessage({ body: `•——𝗜𝗡𝗙𝗢𝗥𝗠𝗔𝗧𝗜𝗢𝗡——•
-Name: ${name}
-First name: ${first_name}
-Creation Date: ${created_time}
-Profile link: ${link_profile}
-Gender: ${gender}
-Relationship Status: ${relationship_status}
-Birthday: ${bday}
-Follower(s): ${follower}
-Verified: ${is_verified}
-Hometown: ${hometown}
-Locale: ${locale}
-•——𝗘𝗡𝗗——•`, attachment: fs.createReadStream(path)
-				}, event.threadID, () => fs.unlinkSync(path), event.messageID);
-			};
+const formattedResponse = `
+╠    𝗙𝗔𝗖𝗘𝗕𝗢𝗢𝗞 𝗦𝗧𝗔𝗟𝗞    ╣
+﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏
 
-			request(encodeURI(avatar)).pipe(fs.createWriteStream(path)).on("close", cb);
-		} catch (err) {
-			api.sendMessage(`Error: ${err.message}`, event.threadID, event.messageID);
-		}
-	}
+• 𝗡𝗮𝗺𝗲: ${apiResponse.name}
+
+• 𝗙𝗮𝘀𝘁: ${apiResponse.fast}
+
+• 𝗨𝘀𝗲𝗿 𝗜𝗗: ${apiResponse.uid}
+
+• 𝗨𝘀𝗲𝗿 𝗡𝗮𝗺𝗲: ${apiResponse.user_name}
+
+• 𝗜𝗗 𝗟𝗶𝗻𝗸: ${apiResponse.idlink}
+
+• 𝗥𝗲𝗹𝗮𝘁𝗶𝗼𝗻𝘀𝗵𝗶𝗽 𝗦𝘁𝗮𝘁𝘂𝘀: ${apiResponse.rlsn}
+
+• 𝗕𝗶𝗿𝘁𝗵𝗱𝗮𝘆: ${apiResponse.birthday}
+
+• 𝗙𝗼𝗹𝗹𝗼𝘄𝗲𝗿𝘀: ${apiResponse.follow}
+
+• 𝗛𝗼𝗺𝗲: ${apiResponse.home}
+
+• 𝗟𝗼𝗰𝗮𝗹: ${apiResponse.local}
+
+• 𝗟𝗼𝘃𝗲: ${apiResponse.love}
+
+• 𝗩𝗲𝗿𝗶𝗳𝗶𝗲𝗱: ${apiResponse.verify}
+
+• 𝗪𝗲𝗯: ${apiResponse.web}
+
+• 𝗤𝘂𝗼𝘁𝗲𝘀: ${apiResponse.quotes}
+
+• 𝗔𝗯𝗼𝘂𝘁: ${apiResponse.about}
+
+• 𝗔𝗰𝗰𝗼𝘂𝗻𝘁 𝗖𝗿𝗲𝗮𝘁𝗶𝗼𝗻 𝗗𝗮𝘁𝗲: ${apiResponse.account_crt}
+﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏
+`;
+
+  await api.sendMessage({
+body: formattedResponse,
+attachment: await global.utils.getStreamFromURL(apiResponse.photo)
+  }, event.threadID);
+      } catch (error) {
+  console.error('Error fetching stalk data:', error);
+  api.sendMessage("An error occurred while processing the request.", event.threadID);
+      }
+  }
+
 };
