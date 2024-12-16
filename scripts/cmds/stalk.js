@@ -1,115 +1,224 @@
-const axios = require('axios');
-
 module.exports = {
-    config: {
-name: "stalk",
-aliases: [],
-version: "1.0", 
-author: "RUBISH",
-description: {
-    vi: "Thu thập thông tin từ một người dùng trên Facebook.",
-    en: "Retrieve information about a user on Facebook."
-},
-category: "Tools",
-guide: {
-    vi: "{pn} <@mention hoặc trả lời tin nhắn của người dùng>",
-    en: "{pn} <@mention or reply to a message of the user>"
-}
-    },
+  config: {
+    name: "stalk2",
+    version: "1.0",
+    author: "Samir Œ",
+    countDown: 5,
+    role: 0,
+    shortDescription: "stalk",
+    longDescription: "multi stalk command",
+    category: "𝗜𝗡𝗙𝗢",
+  },  /**User interface designed by Mesbah Bb'e */
+  getTargetUID: (event) => {
+    if (event.type === "message_reply") {
+      return event.messageReply.senderID;
+    } else {
+      return event.senderID;
+    }
+  },
 
-  onStart: async function ({ api, args, event }) {
-      let userId;
-      let userName;
+global.api = { samirApi:"https://samirxpikachuio.onrender.com" };
+
+  getUserInfo: async (api, threadID, targetID) => {
+    try {
+      const data = await api.getUserInfo(targetID);
+      const { name, gender, birthday, isOnline, isFriend, socialMediaLinks, profileUrl } = data[targetID];
+      const genderText = gender === 1 ? "female" : gender === 2 ? "male" : "unknown";
+      const userName = name || "Name not available";
+      const uid = targetID;
+      const areFriends = isFriend ? "Yes ✅" : "No ❌";
+      const fbLink = `https://www.facebook.com/profile.php?id=${uid}`;
+      const profilePicURL = profileUrl || "";
+      const profilePic = `https://graph.facebook.com/${uid}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
+      const message = {
+        body: `
+       ╭──『 𝗙𝗔𝗖𝗘𝗕𝗢𝗢𝗞 𝗦𝗧𝗔𝗟𝗞 』
+       ✧ Name: ${userName}
+       ✧ UID: ${uid}
+       ✧ Gender: ${genderText}
+       ✧ Friends: ${areFriends}
+       ✧ Facebook Link: ${fbLink}
+       ✧ Profile Picture:
+       ╰───────────◊`,
+        attachment: await global.utils.getStreamFromURL(profilePic),
+      };
+      api.sendMessage(message, threadID);
+    } catch (error) {
+      console.error(error);
+      api.sendMessage("An error occurred while fetching user information.", threadID);
+    }
+  },
+
+  onStart: async function ({ api, event, args }) {
+    const { messageReply, senderID, threadID, type, mentions } = event;
+
+    if (args.length > 0 && args[0] === 'fb') {
+      const uid = this.getTargetUID(event);
+      await this.getUserInfo(api, threadID, uid);
+    } else if (args.length > 0 && args[0].toLowerCase() === 'insta') {
+      const username = args[1];
+      if (!username) {
+        return api.sendMessage("Please provide an Instagram username.", event.threadID);
+      }
 
       try {
-  if (event.type === "message_reply") {
-userId = event.messageReply.senderID;
-const user = await api.getUserInfo(userId);
-userName = user[userId].name;
-  } else {
-const input = args.join(" ");
+        const apiUrl = `${global.api.samirApi}/stalk/insta?username=${username}`;
+        const { data } = await axios.get(apiUrl);
+        const { user_info } = data;
 
-if (event.mentions && Object.keys(event.mentions).length > 0) {
-    userId = Object.keys(event.mentions)[0];
-    const user = await api.getUserInfo(userId);
-    userName = user[userId].name;
-} else if (/^\d+$/.test(input)) {
-    userId = input;
-    const user = await api.getUserInfo(userId);
-    userName = user[userId].name;
-} else if (input.includes("facebook.com")) {
-    const { findUid } = global.utils;
-    let linkUid;
-    try {
-linkUid = await findUid(input);
-    } catch (error) {
-console.error(error);
-return api.sendMessage(
-    "⚠️ |  I couldn't find the user ID from the provided link. Please try again with the user ID.\n\nExample ➾ .stalk 100073291639820",
-    event.threadID
-);
-    }
-    if (linkUid) {
-userId = linkUid;
-const user = await api.getUserInfo(userId);
-userName = user[userId].name;
-    }
-} else {
-    userId = event.senderID;
-    const user = await api.getUserInfo(userId);
-    userName = user[userId].name;
-}
-  }
+        if (!user_info) {
+          return api.sendMessage("Profile not found.", event.threadID);
+        }
 
-  const response = await axios.get(`www.noobs-api.000.pe/dipto/fbinfo?id=${userId}&key=dipto008`);
-const apiResponse = response.data;
+        const profilePicStream = await global.utils.getStreamFromURL(user_info.profile_pic_url);
+        const messageBody = `
+        ╭──『 𝗜𝗡𝗦𝗧𝗔 𝗦𝗧𝗔𝗟𝗞 』
+        ✧ Full Name: ${user_info.full_name}
+        ✧ Username: @${user_info.username}
+        ✧ Biography: ${user_info.biography}
+        ✧ External URL: ${user_info.external_url ? user_info.external_url : "does not have"}
+        ✧ Private Account: ${user_info.is_private ? "Yes" : "No"}
+        ✧ Verified: ${user_info.is_verified ? "Yes" : "No"}
+        ✧ Posts: ${user_info.posts}
+        ✧ Followers: ${user_info.followers}
+        ✧ Following: ${user_info.following}
+        ╰───────────◊`.trim();
 
-const formattedResponse = `
-╠    𝗙𝗔𝗖𝗘𝗕𝗢𝗢𝗞 𝗦𝗧𝗔𝗟𝗞    ╣
-﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏
-
-• 𝗡𝗮𝗺𝗲: ${apiResponse.name}
-
-• 𝗙𝗮𝘀𝘁: ${apiResponse.fast}
-
-• 𝗨𝘀𝗲𝗿 𝗜𝗗: ${apiResponse.uid}
-
-• 𝗨𝘀𝗲𝗿 𝗡𝗮𝗺𝗲: ${apiResponse.user_name}
-
-• 𝗜𝗗 𝗟𝗶𝗻𝗸: ${apiResponse.idlink}
-
-• 𝗥𝗲𝗹𝗮𝘁𝗶𝗼𝗻𝘀𝗵𝗶𝗽 𝗦𝘁𝗮𝘁𝘂𝘀: ${apiResponse.rlsn}
-
-• 𝗕𝗶𝗿𝘁𝗵𝗱𝗮𝘆: ${apiResponse.birthday}
-
-• 𝗙𝗼𝗹𝗹𝗼𝘄𝗲𝗿𝘀: ${apiResponse.follow}
-
-• 𝗛𝗼𝗺𝗲: ${apiResponse.home}
-
-• 𝗟𝗼𝗰𝗮𝗹: ${apiResponse.local}
-
-• 𝗟𝗼𝘃𝗲: ${apiResponse.love}
-
-• 𝗩𝗲𝗿𝗶𝗳𝗶𝗲𝗱: ${apiResponse.verify}
-
-• 𝗪𝗲𝗯: ${apiResponse.web}
-
-• 𝗤𝘂𝗼𝘁𝗲𝘀: ${apiResponse.quotes}
-
-• 𝗔𝗯𝗼𝘂𝘁: ${apiResponse.about}
-
-• 𝗔𝗰𝗰𝗼𝘂𝗻𝘁 𝗖𝗿𝗲𝗮𝘁𝗶𝗼𝗻 𝗗𝗮𝘁𝗲: ${apiResponse.account_crt}
-﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏
-`;
-
-  await api.sendMessage({
-body: formattedResponse,
-attachment: await global.utils.getStreamFromURL(apiResponse.photo)
-  }, event.threadID);
+        await api.sendMessage({ body: messageBody, attachment: profilePicStream }, event.threadID);
       } catch (error) {
-  console.error('Error fetching stalk data:', error);
-  api.sendMessage("An error occurred while processing the request.", event.threadID);
+        console.error(error);
+        return api.sendMessage("An error occurred while fetching the Instagram profile.", event.threadID);
       }
-  }
+    } else if (args.length > 0 && args[0].toLowerCase() === 'tik') {
+      const username = args.slice(1).join(" ");
+      if (!username) {
+        return api.sendMessage("Please provide a TikTok username.", event.threadID);
+      }
 
+      try {
+        const response = await axios.get(`${global.api.samirApi}/tikstalk?username=${encodeURIComponent(username)}`);
+        const data = response.data;
+
+        let messageBody = `
+        ╭──『 𝗧𝗜𝗞𝗧𝗢𝗞 𝗦𝗧𝗔𝗟𝗞 』
+        ✧ Nickname: ${data.nickname}
+        ✧ Username: ${data.username}
+        ✧ Video Count: ${data.videoCount}
+        ✧ Following Count: ${data.followingCount}
+        ✧ Follower Count: ${data.followerCount}
+        ✧ Heart Count: ${data.heartCount}
+        ✧ Digg Count: ${data.diggCount}
+        ╰───────────◊`;
+
+        api.sendMessage({
+          body: messageBody,
+          attachment: await global.utils.getStreamFromURL(data.avatarLarger)
+        }, event.threadID);
+      } catch (error) {
+        console.error(error);
+        return api.sendMessage("Failed to fetch TikTok user information.", event.threadID);
+      }
+    } else if (args.length > 0 && args[0].toLowerCase() === 'twitter') {
+      const username = args.slice(1).join(" ");
+      if (!username) {
+        return api.sendMessage("Please provide a Twitter username.", event.threadID);
+      }
+
+      try {
+        const response = await axios.get(`${global.api.samirApi}/tweet/stalk?username=${encodeURIComponent(username)}`);
+        const { profile, username: user, name, followers, following, media, statusCount, description } = response.data;
+
+        let messageBody = `
+        ╭──『 𝗧𝗪𝗜𝗧𝗧𝗘𝗥 𝗦𝗧𝗔𝗟𝗞 』
+        ✧ Name: ${name}\n✧ Username: ${user}
+        ✧ Followers: ${followers}
+        ✧ Following: ${following}
+        ✧ Media: ${media}
+        ✧ Status Count: ${statusCount}
+        ✧ Description: ${description}
+        ╰───────────◊`;
+
+        await api.sendMessage({
+          body: messageBody,
+          attachment: await global.utils.getStreamFromURL(profile)
+        }, event.threadID);
+      } catch (error) {
+        console.error(error);
+        return api.sendMessage("Failed to fetch Twitter user information.", event.threadID);
+      }
+    } else if (args.length > 0 && args[0].toLowerCase() === 'pastebin') {
+      const username = args[1];
+      if (!username) {
+        return api.sendMessage("Please provide a Pastebin username.", event.threadID);
+      }
+
+      try {
+        const apiUrl = `${global.api.samirApi}/pastebin/userinfo?name=${encodeURIComponent(username)}`;
+        const response = await axios.get(apiUrl);
+        const userInfo = response.data;
+
+        const messageBody = `
+        ╭──『 𝗣-𝗕𝗜𝗡 𝗦𝗧𝗔𝗟𝗞 』
+        ✧ name ${userInfo.name}
+        ✧ Viewing: ${userInfo.viewing}
+        ✧ Total Views: ${userInfo.totalViews}
+        ✧ Rating: ${userInfo.rating}
+        ✧ Joined: ${userInfo.joined}
+        ✧ Creation Date: ${userInfo.creationDate}
+        ╰───────────◊`;
+
+        await api.sendMessage({
+          body: messageBody,
+          attachment: await global.utils.getStreamFromURL(userInfo.userIcon)
+        }, event.threadID);
+      } catch (error) {
+        console.error(error);
+        api.sendMessage("An error occurred while fetching Pastebin user information.", event.threadID);
+      }
+    } else if (args.length > 0 && args[0].toLowerCase() === 'github') {
+      const username = args.slice(1).join(" ");
+      if (!username) {
+        return api.sendMessage("Please provide a GitHub username.", event.threadID);
+      }
+
+      try {
+        const cyclic = 'cyclic';
+        const response = await axios.get(`https://api-proxy.${cyclic}.app/gitstalk?user=${username}`);
+        const userProfile = response.data.user;
+
+        const messageBody = `
+        ╭──『 𝗚𝗜𝗧𝗛𝗨𝗕 𝗦𝗧𝗔𝗟𝗞 』
+        ✧ Name: ${userProfile.name}
+        ✧ Username: ${userProfile.username}
+        ✧ Bio: ${userProfile.bio}
+        ✧ Followers: ${userProfile.followers}
+        ✧ Following: ${userProfile.following}
+        ✧ Total Public Repos: ${userProfile.publicRepos}
+        ✧ Location: ${userProfile.location}
+        ✧ Creation Date: ${userProfile.createdAt}
+        ✧ Profile URL: ${userProfile.githubUrl}
+        ✧ Profile Picture:
+        ╰───────────◊
+        `;
+        const messageToSend = {
+          body: messageBody,
+          attachment: await global.utils.getStreamFromURL(userProfile.avatarUrl)
+        };
+
+        return api.sendMessage(messageToSend, event.threadID);
+      } catch (error) {
+        console.error(error);
+        api.sendMessage("An error occurred while fetching the user information", event.threadID);
+      }
+    } else {
+     api.sendMessage(`╭──『 𝗦𝗧𝗔𝗟𝗞 』  
+✧ stalk fb <uid> | <mention>
+✧ stalk insta <username>
+✧ stalk tik <username>
+✧ stalk twitter <username>
+✧ stalk pastebin <username>
+✧ stalk github <username>
+╰───────────◊`, threadID);
+    }
+  },
 };
