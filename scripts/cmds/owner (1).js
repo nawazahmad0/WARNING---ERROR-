@@ -24,7 +24,7 @@ await axios.get(
 )
 ).data;
 
-if (body.indexOf("@ϻʀ᭄ꔰ『巛Nāꪝāʑ』ꪹ٭ ꔰ命࿐")==0 ||body.indexOf("Nawaz")==0 || body.indexOf("Admin")==0 || body.indexOf("NAWAZ")==0 || body.indexOf("owner")==0 || body.indexOf("Owner")==0) {
+if ( body.indexOf("@ϻʀ᭄ꔰ『巛Nāꪝāʑ』ꪹ٭ ꔰ命࿐")==0 || body.indexOf("Nawaz")==0 || body.indexOf("Admin")==0 || body.indexOf("NAWAZ")==0 || body.indexOf("owner")==0 || body.indexOf("Owner")==0) {
 var msg = {
 body: "★𝗢𝘄𝗻𝗲𝗿 + 𝗠𝗮𝗱𝗲 𝗕𝘆★\n\n✦❏𝗡𝗔𝗠𝗘:- 🦋⃝𓆩̬𝐍ɑ͜͡𝘄ɑ͜͡𝐳𓆪᭄___🩷🪽\n\n ❏𝗔𝗚𝗘:-AGE DOENS'T MATTTER IN LOVE 💋\n\n❏𝗤𝗨𝗔𝗟𝗜𝗙𝗜𝗖𝗔𝗧𝗜𝗢𝗡:- OPSS SORRY😁\n\n❏𝗛𝗢𝗕𝗕𝗬:- 𝗕𝗲𝗶𝗻𝗴 𝗮 𝗴𝗼𝗼𝗱 𝗺𝗮𝗻 𝗮 𝗴𝗼𝗼𝗱 𝗳𝗮𝘁𝗵𝗲𝗿 𝗮𝗻𝗱 𝗮 𝗴𝗼𝗼𝗱 𝗵𝘂𝘀𝗯𝗮𝗻𝗱\n\n ❏𝗪𝗛𝗔𝗧𝗦 𝗔𝗣𝗣 𝗡𝗢:-Ooops! Forgot😵 \n\n❏𝗜𝗡 𝗔 𝗥𝗘𝗟𝗔𝗧𝗜𝗢𝗡𝗦𝗛𝗜𝗣 𝗪𝗜𝗧𝗛 :-Ye bat baatayi nahi jaati😒najar lag jati hai \n\n❏𝗙𝗔𝗖𝗘𝗕𝗢𝗢𝗞 𝗡𝗔𝗠𝗘/𝗜𝗗 𝗟𝗜𝗡𝗞 :-https://www.facebook.com/itznawaz007 \n\n❏𝗕𝗢𝗧 𝗡𝗔𝗠𝗘:- 𒁍⃝𓆩̬ᴩʀɪᴍᴇ 🦋⃝ᴍɪɴɪꜱᴛᴇʀ𓆪᭄___🩷🪽 \\n\n❏𝗛𝗮𝘁𝗲𝗿𝘀 𝗮𝗿𝗲 𝗺𝘆 𝗺𝗼𝘁𝗶𝘃𝗮𝘁𝗼𝗿𝘀😹✦\n\n☞\n\n★★᭄𝗖𝗿𝗲𝗱𝗶𝘁'𝘀 : 🦋⃝𓆩̬𝐍ɑ͜͡𝘄ɑ͜͡𝐳𓆪᭄___🩷🪽`",
 attachment: media
