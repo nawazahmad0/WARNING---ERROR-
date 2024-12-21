@@ -1,74 +1,111 @@
-const path = require("path");
 const axios = require("axios");
-const fs = require("fs");
+const fs = require('fs-extra');
+const path = require('path');
+const { getStreamFromURL, shortenURL, randomString } = global.utils;
+
+const API_KEYS = [
+    'b38444b5b7mshc6ce6bcd5c9e446p154fa1jsn7bbcfb025b3b',
+   
+];
+
+async function video(api, event, args, message) {
+    api.setMessageReaction("🕢", event.messageID, (err) => {}, true);
+    try {
+        let title = '';
+        let shortUrl = '';
+        let videoId = '';
+
+        const extractShortUrl = async () => {
+            const attachment = event.messageReply.attachments[0];
+            if (attachment.type === "video" || attachment.type === "audio") {
+                return attachment.url;
+            } else {
+                throw new Error("Invalid attachment type.");
+            }
+        };
+
+        const getRandomApiKey = () => {
+            const randomIndex = Math.floor(Math.random() * API_KEYS.length);
+            return API_KEYS[randomIndex];
+        };
+
+        if (event.messageReply && event.messageReply.attachments && event.messageReply.attachments.length > 0) {
+            shortUrl = await extractShortUrl();
+            const musicRecognitionResponse = await axios.get(`https://audio-recon-ahcw.onrender.com/kshitiz?url=${encodeURIComponent(shortUrl)}`);
+            title = musicRecognitionResponse.data.title;
+            const searchResponse = await axios.get(`https://youtube-kshitiz-gamma.vercel.app/yt?search=${encodeURIComponent(title)}`);
+            if (searchResponse.data.length > 0) {
+                videoId = searchResponse.data[0].videoId;
+            }
+
+            shortUrl = await shortenURL(shortUrl);
+        } else if (args.length === 0) {
+            message.reply("Please provide a video name or reply to a video or audio attachment.");
+            return;
+        } else {
+            title = args.join(" ");
+            const searchResponse = await axios.get(`https://youtube-kshitiz-gamma.vercel.app/yt?search=${encodeURIComponent(title)}`);
+            if (searchResponse.data.length > 0) {
+                videoId = searchResponse.data[0].videoId;
+            }
+
+            const videoUrlResponse = await axios.get(`https://mr-kshitizyt.onrender.com/download?id=${encodeURIComponent(videoId)}&apikey=${getRandomApiKey()}`);
+            if (videoUrlResponse.data.length > 0) {
+                shortUrl = await shortenURL(videoUrlResponse.data[0]);
+            }
+        }
+
+        if (!videoId) {
+            message.reply("No video found for the given query.");
+            return;
+        }
+
+        const downloadResponse = await axios.get(`https://mr-kshitizyt.onrender.com/download?id=${encodeURIComponent(videoId)}&apikey=${getRandomApiKey()}`);
+        const videoUrl = downloadResponse.data[0];
+
+        if (!videoUrl) {
+            message.reply("Failed to retrieve download link for the video.");
+            return;
+        }
+
+        const writer = fs.createWriteStream(path.join(__dirname, "cache", `${videoId}.mp4`));
+        const response = await axios({
+            url: videoUrl,
+            method: 'GET',
+            responseType: 'stream'
+        });
+
+        response.data.pipe(writer);
+
+        writer.on('finish', () => {
+            const videoStream = fs.createReadStream(path.join(__dirname, "cache", `${videoId}.mp4`));
+            message.reply({ body: `📹 Playing: ${title}`, attachment: videoStream });
+            api.setMessageReaction("✅", event.messageID, () => {}, true);
+        });
+
+        writer.on('error', (error) => {
+            console.error("Error:", error);
+            message.reply("Error downloading the video.");
+        });
+    } catch (error) {
+        console.error("Error:", error);
+        message.reply("An error occurred.");
+    }
+}
 
 module.exports = {
-  config: {
-    name: "video",
-    author: "",
-    countdown: 5,
-    role: 0,
-    category: "media",
-    shortDescription: {
-      en: "Search video from YouTube",
+    config: {
+        name: "video", 
+        version: "1.0",
+        author: "Vex_kshitiz",
+        countDown: 10,
+        role: 0,
+        shortDescription: "play video from youtube",
+        longDescription: "play video from youtube support audio recognition.",
+        category: "music",
+        guide: "{p} video videoname / reply to audio or video" 
     },
-  },
-  onStart: async function ({ api, args, event }) {
-    try {
-      const searchQuery = args.join(" ");
-      if (!searchQuery) {
-        const messageInfo = await new Promise((resolve) => {
-          api.sendMessage("Usage: video <search text>", event.threadID, (err, info) => {
-            resolve(info);
-          });
-        });
-        setTimeout(() => {
-          api.unsendMessage(messageInfo.messageID);
-        }, 10000);
-        return;
-      }
-
-      const searchingMessage = await new Promise((resolve) => {
-        api.sendMessage(`⏱️ | Searching for '${searchQuery}', please wait...`, event.threadID, (err, info) => {
-          resolve(info);
-        });
-      });
-
-      const videoSearchUrl = `https://betadash-search-download.vercel.app/yt?search=${encodeURIComponent(searchQuery)}`;
-      const videoResponse = await axios.get(videoSearchUrl);
-      const videoData = videoResponse.data[0];
-
-      const { url: videoUrl, title, time, views, thumbnail, channelName } = videoData;
-
-      const downloadUrl = `https://yt-video-production.up.railway.app/ytdl?url=${videoUrl}`;
-      const vidResponse = await axios.get(downloadUrl);
-      const videoFile = vidResponse.data.video;
-
-      const videoPath = path.join(__dirname, "cache", "videov2.mp4");
-      const videoContent = await axios.get(videoFile, { responseType: "arraybuffer" });
-      fs.writeFileSync(videoPath, Buffer.from(videoContent.data));
-
-      api.unsendMessage(searchingMessage.messageID);
-
-      await api.sendMessage(
-        {
-          body: `Here's your video, enjoy! 🥰\n\n𝗧𝗶𝘁𝗹𝗲: ${title}\n𝗗𝘂𝗿𝗮𝘁𝗶𝗼𝗻: ${time}\n𝗩𝗶𝗲𝘄𝘀: ${views}`,
-          attachment: fs.createReadStream(videoPath),
-        },
-        event.threadID,
-        event.messageID
-      );
-
-      fs.unlinkSync(videoPath);
-    } catch (error) {
-      const errorMessage = await new Promise((resolve) => {
-        api.sendMessage(error.message, event.threadID, (err, info) => {
-          resolve(info);
-        });
-      });
-      setTimeout(() => {
-        api.unsendMessage(errorMessage.messageID);
-      }, 10000);
+    onStart: function ({ api, event, args, message }) {
+        return video(api, event, args, message);
     }
-  },
 };
